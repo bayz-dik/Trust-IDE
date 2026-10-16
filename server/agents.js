@@ -137,9 +137,9 @@ export class AgentCoordinator {
     this.running=true;this.active={mode,kind:'agent'};
     this.emit('Starting '+mode.toUpperCase()+' task');
     try{
-      if(mode==='omp'||mode==='fusion'){const s=await this._omp();await this._turn(s,prompt);this.emit('OMP implementation completed')}
+      if(mode==='omp'||mode==='fusion'){this.active.stage='omp';const s=await this._omp();await this._turn(s,prompt);this.emit('OMP implementation completed')}
       if(mode==='codex'||mode==='fusion'){
-        const s=await this._codex();
+        this.active.stage='codex';const s=await this._codex();
         const task=mode==='fusion'?'Review the workspace changes for this task, fix any clear issues, and run relevant checks where available. Original task: '+prompt:prompt;
         await this._turn(s,task);this.emit('Codex turn completed');
       }
@@ -167,7 +167,7 @@ export class AgentCoordinator {
     if(!this.running)return false;
     const a=this.active;
     if(a?.kind==='build'){a.proc?.kill('SIGTERM');this.emit('Build stop requested');return true}
-    const s=this.proc[a?.mode==='codex'?'codex':'omp'];
+    const s=this.proc[a?.stage==='codex'?'codex':'omp'];
     if(!s)return false;
     if(s.protocol==='omp')this._send(s,{id:'cancel_'+(++this.req),type:'abort'});
     else if(s.turnId&&s.thread)this._send(s,{id:'cancel_'+(++this.req),method:'turn/interrupt',params:{threadId:s.thread,turnId:s.turnId}});
