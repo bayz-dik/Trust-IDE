@@ -1,0 +1,7 @@
+.fusion/
+node_modules/
+.env
+*.keystore
+*.jks
+local.properties
+workspace/**/build/
